@@ -1,0 +1,33 @@
+# memos-plugin-bangumi 配置模板
+# 复制为当前目录下的 config.toml 即可——程序默认读取当前路径下的 config.toml
+# （不存在则跳过），所有项也可用命令行参数覆盖（命令行优先）。
+# 各键所示值即程序默认值；未注释的必填项请按需填写。
+
+# ---------- Bangumi ----------
+bangumi_username = ""                 # Bangumi 用户名或 UID（必填，无默认值）
+# bangumi_base = "https://api.bgm.tv"
+# user_agent = "memos-plugin-bangumi/0.1.0 (https://github.com/yourname/memos-plugin-bangumi)"
+# link_base = "https://bgm.tv"        # memo 正文的条目链接域名，如 "https://fxbgm.tv"
+
+# ---------- Memos 写入 ----------
+# 方式一：API 模式（memos 运行中，推荐）
+# api = ""                            # memos 地址，如 "http://localhost:5230"
+# password = ""                       # memos >= 0.30 用密码登录（推荐）
+# token = ""                          # 或直接填 Access Token（memos < 0.30）
+
+# 方式二：直写数据库（需先停止 memos；与 api 二选一）
+# db = "memos.db"
+# user = "admin"
+
+# ---------- 可选 ----------
+# visibility = "private"              # private / protected / public
+# tag = ""                            # 附加标签，空 = 不加
+# subject_types = []                  # 空 = 全部；例如 [2, 4] 只导入动画与游戏
+
+# ---------- 同步 ----------
+# dry_run = false                     # 只预览，不写入
+# full = false                        # 忽略状态文件，全量扫描
+# verbose = false                     # 逐条输出创建的 memo（默认只输出汇总）
+# state = "state.json"                # 增量状态文件
+# timeout = 30                        # HTTP 超时秒数
+# limit = 100                         # Bangumi 分页大小（上限 100）

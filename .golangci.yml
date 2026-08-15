@@ -1,0 +1,27 @@
+version: "2"
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+
+linters:
+  default: standard
+  enable:
+    - errcheck
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+  settings:
+    errcheck:
+      exclude-functions:
+        - (io.Closer).Close
+        - (*database/sql.DB).Close
+        - (*database/sql.Rows).Close
+        - fmt.Fprintf
+    staticcheck:
+      checks:
+        - all
+  exclusions:
+    generated: lax

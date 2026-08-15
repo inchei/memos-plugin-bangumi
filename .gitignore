@@ -1,0 +1,8 @@
+config.toml
+state.json
+sync.log
+/dist/
+memos-plugin-bangumi
+*.db
+*.db-wal
+*.db-shm

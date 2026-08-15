@@ -1,0 +1,44 @@
+#!/bin/sh
+# memos-plugin-bangumi pre-commit 钩子
+# 提交前自检：gofmt 格式化、go vet、构建、golangci-lint。
+# 跳过某个检查：SKIP=vet SKIP=lint git commit ...
+set -e
+
+skip() {
+  case ",$SKIP," in
+    *",$1,"*) return 0 ;;
+  esac
+  return 1
+}
+
+echo "== 检查 gofmt =="
+if ! skip fmt; then
+  unformatted=$(gofmt -l $(git ls-files '*.go'))
+  if [ -n "$unformatted" ]; then
+    echo "以下文件未通过 gofmt："
+    echo "$unformatted"
+    echo "请运行：gofmt -w 以上文件"
+    exit 1
+  fi
+fi
+
+echo "== go vet =="
+if ! skip vet; then
+  go vet ./...
+fi
+
+echo "== go build =="
+if ! skip build; then
+  go build ./...
+fi
+
+echo "== golangci-lint =="
+if ! skip lint; then
+  if command -v golangci-lint >/dev/null 2>&1; then
+    golangci-lint run
+  else
+    echo "未安装 golangci-lint，跳过（SKIP=lint 可显式跳过）"
+  fi
+fi
+
+echo "pre-commit 检查通过"
