@@ -66,7 +66,9 @@ func (l *intListFlag) Set(s string) error {
 // memoWriter 抽象 API 与直写库两种写入方式。
 type memoWriter interface {
 	listExistingUIDs(context.Context) (map[string]bool, error)
+	listBangumiOwned(context.Context) ([]string, error)
 	create(ctx context.Context, uid, content, visibility, createTime string, ts int64, tag string) (bool, error)
+	delete(ctx context.Context, uid string) error
 	close()
 }
 
@@ -102,6 +104,7 @@ func run(args []string) int {
 	fs.BoolVar(&cfg.DryRun, "dry-run", cfg.DryRun, "只预览不写入")
 	fs.BoolVar(&cfg.Full, "full", cfg.Full, "忽略状态文件，全量扫描")
 	fs.BoolVar(&cfg.Verbose, "verbose", cfg.Verbose, "逐条输出创建的 memo")
+	fs.BoolVar(&cfg.Delete, "delete", cfg.Delete, "卸载已导入的 Bangumi memos（删除 uid 以 bgm- 开头的 memo）")
 	fs.StringVar(&cfg.State, "state", cfg.State, "增量状态文件路径")
 	fs.IntVar(&cfg.Timeout, "timeout", cfg.Timeout, "HTTP 超时秒数")
 	fs.IntVar(&cfg.Limit, "limit", cfg.Limit, "Bangumi 分页大小（上限 100）")
@@ -116,6 +119,9 @@ func run(args []string) int {
 	}
 	cfg.SubjectTypes = []int(subjectTypes)
 
+	if cfg.Delete {
+		return uninstall(cfg)
+	}
 	return sync(cfg)
 }
 
@@ -246,6 +252,60 @@ func sync(cfg *Config) int {
 	}
 
 	fmt.Printf("\n完成：扫描 %d 条收藏，%s %d 条，跳过 %d 条\n", total, map[bool]string{true: "dry-run 待创建", false: "创建"}[cfg.DryRun], created, skipped)
+	return 0
+}
+
+// uninstall 卸载已导入的 Bangumi memos：删除 uid 以 bgm- 开头的 memo，并重置增量状态。
+// 不访问 Bangumi，仅需 memos 连接参数（--api / --db）。
+func uninstall(cfg *Config) int {
+	ctx := context.Background()
+	if cfg.API == "" && cfg.DB == "" {
+		cfg.DB = defaultDB
+	}
+	timeout := time.Duration(cfg.Timeout) * time.Second
+	if timeout <= 0 {
+		timeout = time.Duration(defaultTimeout) * time.Second
+	}
+	writer, _, err := openWriter(cfg, timeout)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+	defer writer.close()
+
+	uids, err := writer.listBangumiOwned(ctx)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+	if len(uids) == 0 {
+		fmt.Println("未找到已导入的 Bangumi memo（uid 以 bgm- 开头）")
+	} else if cfg.DryRun {
+		for _, uid := range uids {
+			fmt.Printf("  [dry-run] 将删除 %s\n", uid)
+		}
+		fmt.Printf("\n完成：dry-run 待删除 %d 条\n", len(uids))
+		return 0
+	} else {
+		deleted := 0
+		for _, uid := range uids {
+			if err := writer.delete(ctx, uid); err != nil {
+				fmt.Fprintf(os.Stderr, "  删除 %s 失败：%v\n", uid, err)
+				continue
+			}
+			if cfg.Verbose {
+				fmt.Printf("  已删除 %s\n", uid)
+			}
+			deleted++
+		}
+		fmt.Printf("\n完成：删除 %d 条 Bangumi memo，失败 %d 条\n", deleted, len(uids)-deleted)
+	}
+
+	if !cfg.DryRun {
+		if err := os.Remove(cfg.State); err == nil {
+			fmt.Printf("已重置增量状态文件 %s（下次同步为全量）\n", cfg.State)
+		}
+	}
 	return 0
 }
 

@@ -44,6 +44,7 @@ type Config struct {
 	DryRun       bool   `toml:"dry_run"`
 	Full         bool   `toml:"full"`
 	Verbose      bool   `toml:"verbose"`
+	Delete       bool   `toml:"delete"`
 	State        string `toml:"state"`
 	Timeout      int    `toml:"timeout"`
 	Limit        int    `toml:"limit"`

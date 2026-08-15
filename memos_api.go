@@ -11,6 +11,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"sort"
 	"strings"
 	"time"
 )
@@ -185,6 +186,34 @@ func (c *apiClient) create(ctx context.Context, uid, content, visibility, create
 		return false, nil
 	}
 	return false, fmt.Errorf("创建 memo 失败：HTTP %d：%s", code, truncate(string(data), 200))
+}
+
+// listBangumiOwned 列出当前用户 uid 以 bgm- 开头的 memo（用于卸载）。
+func (c *apiClient) listBangumiOwned(ctx context.Context) ([]string, error) {
+	existing, err := c.listExistingUIDs(ctx)
+	if err != nil {
+		return nil, err
+	}
+	var uids []string
+	for uid := range existing {
+		if strings.HasPrefix(uid, "bgm-") {
+			uids = append(uids, uid)
+		}
+	}
+	sort.Strings(uids)
+	return uids, nil
+}
+
+// delete 按 uid 删除 memo；已不存在（404）视为成功（幂等）。
+func (c *apiClient) delete(ctx context.Context, uid string) error {
+	code, data, err := c.doJSON(ctx, http.MethodDelete, "/api/v1/memos/"+url.PathEscape(uid), nil, nil, nil)
+	if err != nil {
+		return err
+	}
+	if code == http.StatusOK || code == http.StatusNotFound {
+		return nil
+	}
+	return fmt.Errorf("删除 memo 失败：HTTP %d：%s", code, truncate(string(data), 200))
 }
 
 func (c *apiClient) close() {}

@@ -27,6 +27,8 @@ bangumi_username = ""                 # Bangumi 用户名或 UID（必填，无�
 # ---------- 同步 ----------
 # dry_run = false                     # 只预览，不写入
 # full = false                        # 忽略状态文件，全量扫描
+# delete = false                      # 卸载已导入的 Bangumi memos（删除 uid 以 bgm- 开头
+#                                     # 的 memo 并重置增量状态；需同 --api 或 --db）
 # verbose = false                     # 逐条输出创建的 memo（默认只输出汇总）
 # state = "state.json"                # 增量状态文件
 # timeout = 30                        # HTTP 超时秒数

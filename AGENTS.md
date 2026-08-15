@@ -42,6 +42,8 @@
 - `parseBangumiTime`：布局 `2006-01-02T15:04:05-07:00`（+08:00），转 epoch 秒
 - 过滤：`comment` 空白则跳过；`uid = bgm-{subject_id}` 幂等（uid 已存在则跳过）
 - 输出：默认只打印进度与汇总，`--verbose` 才逐条输出创建的 memo；`--dry-run` 始终打印预览内容
+- 卸载：`--delete` 删除 uid 以 `bgm-` 开头的 memo 并重置状态文件（不访问 Bangumi，只需 memos 连接参数；
+  API 模式 `DELETE /api/v1/memos/{uid}`，404 视为成功；直写库按 `uid + creator_id` 删除）
 - 增量：`state.json` 记 `last_updated_ts`（epoch 秒）；列表按 updated_at 降序，
   遇到 `ts <= 水印` 即 `break`（后续更旧）；`--full` 或首次运行（水印为 0）走全量；
   `--dry-run` 不读/写 memos，也不保存状态

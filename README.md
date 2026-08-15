@@ -71,6 +71,22 @@ memos-plugin-bangumi --bangumi-username sai --dry-run
 */30 * * * * cd /path/to/memos-plugin-bangumi && ./memos-plugin-bangumi --config config.toml >> sync.log 2>&1
 ```
 
+### 卸载已导入的 Bangumi memos
+
+删除 uid 以 `bgm-` 开头（即本工具导入）的 memo，并重置增量状态文件：
+
+```sh
+# 预览将删除的内容（不实际删除）
+memos-plugin-bangumi --delete --dry-run --api http://localhost:5230 --user admin --password '你的密码'
+# 或直写库模式（需先停止 memos）
+memos-plugin-bangumi --delete --dry-run --db ~/.memos/memos.db --user admin
+
+# 实际删除
+memos-plugin-bangumi --delete --api http://localhost:5230 --user admin --password '你的密码'
+```
+
+`--delete` 不需要 `bangumi_username`，只需 memos 连接参数；再次同步会因状态已重置而全量重建。
+
 ## 配置文件
 
 默认读取当前目录 `config.toml`（不存在则跳过），也可用 `--config` 指定其它路径；

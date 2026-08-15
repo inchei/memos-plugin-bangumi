@@ -78,4 +78,28 @@ func (w *dbWriter) create(_ context.Context, uid, content, visibility, _ string,
 	return true, nil
 }
 
+// listBangumiOwned 列出当前用户 uid 以 bgm- 开头的 memo（用于卸载）。
+func (w *dbWriter) listBangumiOwned(_ context.Context) ([]string, error) {
+	rows, err := w.db.Query(`SELECT uid FROM memo WHERE creator_id = ? AND uid LIKE 'bgm-%' ORDER BY uid`, w.userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var uids []string
+	for rows.Next() {
+		var uid string
+		if err := rows.Scan(&uid); err != nil {
+			return nil, err
+		}
+		uids = append(uids, uid)
+	}
+	return uids, rows.Err()
+}
+
+// delete 删除当前用户下 uid 对应的 memo（幂等，不存在也返回 nil）。
+func (w *dbWriter) delete(_ context.Context, uid string) error {
+	_, err := w.db.Exec(`DELETE FROM memo WHERE uid = ? AND creator_id = ?`, uid, w.userID)
+	return err
+}
+
 func (w *dbWriter) close() { _ = w.db.Close() }
