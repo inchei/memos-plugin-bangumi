@@ -1,0 +1,91 @@
+name: release-latest
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: build (${{ matrix.goos }}/${{ matrix.goarch }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - goos: linux
+            goarch: amd64
+            ext: ""
+          - goos: linux
+            goarch: arm64
+            ext: ""
+          - goos: darwin
+            goarch: amd64
+            ext: ""
+          - goos: darwin
+            goarch: arm64
+            ext: ""
+          - goos: windows
+            goarch: amd64
+            ext: ".exe"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: 构建二进制
+        run: |
+          VERSION=$(git show -s --format=%cs-%h HEAD)
+          CGO_ENABLED=0 GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} \
+            go build -trimpath -ldflags "-s -w -X main.version=$VERSION" \
+            -o dist/memos-plugin-bangumi-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.ext }} .
+
+      - name: 校验
+        run: go vet ./...
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bin-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: dist/memos-plugin-bangumi-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.ext }}
+          if-no-files-found: error
+
+  release:
+    name: 更新 latest Release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: 生成 SHA256SUMS
+        working-directory: dist
+        run: sha256sum * > SHA256SUMS
+
+      - name: 删除旧 Release（保留 latest 标签）
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release delete latest --yes || true
+
+      - name: 创建新 Release（依据旧标签位置生成变更记录）
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create latest dist/* \
+            --title "latest（滚动发布）" \
+            --generate-notes
+
+      - name: 移动 latest 标签到当前提交
+        run: |
+          git tag -f latest HEAD
+          git push -f origin latest

@@ -6,7 +6,7 @@
 # ---------- Bangumi ----------
 bangumi_username = ""                 # Bangumi 用户名或 UID（必填，无默认值）
 # bangumi_base = "https://api.bgm.tv"
-# user_agent = "memos-plugin-bangumi/0.1.0 (https://github.com/yourname/memos-plugin-bangumi)"
+# user_agent = "memos-plugin-bangumi/0.1.0 (https://github.com/inchei/memos-plugin-bangumi)"
 # link_base = "https://bgm.tv"        # memo 正文的条目链接域名，如 "https://fxbgm.tv"
 
 # ---------- Memos 写入 ----------

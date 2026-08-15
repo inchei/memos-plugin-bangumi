@@ -6,6 +6,16 @@
 把 Bangumi 用户「看过 / 玩过 / 读过 / 听过」且**带短评**的收藏导入 [Memos](https://github.com/usememos/memos)，
 memo 为纯文字，正文含条目名、完成态文案、短评和 Bangumi 链接。
 
+## 下载
+
+每次推送 `main` 后，[GitHub Actions](.github/workflows/release.yml) 会自动构建并发布到
+**滚动发布**的 `latest` Release（多平台静态二进制 + `SHA256SUMS`）：
+
+https://github.com/inchei/memos-plugin-bangumi/releases/tag/latest
+
+二进制文件名带平台后缀：`memos-plugin-bangumi-linux-amd64`、`linux-arm64`、`darwin-amd64`、
+`darwin-arm64`、`windows-amd64.exe`；下载后解压/重命名即可运行。`--version` 显示构建日期与提交号。
+
 ## 版本要求
 
 | 依赖 | 版本 |

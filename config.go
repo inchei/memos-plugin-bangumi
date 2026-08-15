@@ -22,7 +22,7 @@ const (
 	defaultLinkBase    = "https://bgm.tv"
 )
 
-var defaultUserAgent = "memos-plugin-bangumi/" + version + " (https://github.com/yourname/memos-plugin-bangumi)"
+var defaultUserAgent = "memos-plugin-bangumi/" + version + " (https://github.com/inchei/memos-plugin-bangumi)"
 
 // Config 对应 TOML 配置文件的顶层结构，键名与命令行参数（去掉 --、- 换 _）一致。
 type Config struct {

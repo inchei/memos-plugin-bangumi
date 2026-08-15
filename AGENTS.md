@@ -20,6 +20,8 @@
 - `state.go`      增量状态文件（水印 last_updated_ts）
 - `memos_api.go`  API 模式实现（signin / 列 uid / 创建 memo）
 - `memos_db.go`   直写 sqlite 实现（modernc.org/sqlite，纯 Go 无 cgo）
+- `.github/workflows/release.yml`  push 到 main 时自动构建多平台静态二进制并更新
+  `latest` 滚动 Release（`CGO_ENABLED=0`，ldflags 注入 `main.version` 为 `%cs-%h`）
 - `README.md` / `AGENTS.md` / `LICENSE` / `config.example.toml` / `.gitignore`
 
 ## 技术约束（务必遵守）
