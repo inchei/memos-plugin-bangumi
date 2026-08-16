@@ -20,7 +20,8 @@ Python ≥ 3.11（`tomllib` 3.11 才进入标准库）。不需要任何工具�
 - `memos-plugin-bangumi.py`  全部代码（含文件头 GPL 版权声明）
 - `config.example.toml`      配置模板
 - `.github/workflows/sync.yml` 每 6 小时在 GitHub runner 上跑一次 API 模式同步
-  （需 memos 公网可达；凭据走 Secrets，state 用 Actions cache 持久化；未配置 secrets 则安全跳过）
+  （需 memos 公网可达；凭据走 Secrets；`state.json` 走 Actions cache 不进仓库，支持
+  workflow_dispatch 传 `watermark` 播种初始水印 / `full` 强制全量；未配置 secrets 则安全跳过）
 - `logo.png`   README 顶部展示的仓库 logo
 - `README.md` / `AGENTS.md` / `CONTRIBUTING.md` / `LICENSE` / `.gitignore`
 
@@ -51,7 +52,8 @@ Python ≥ 3.11（`tomllib` 3.11 才进入标准库）。不需要任何工具�
   API 模式 `DELETE /api/v1/memos/{uid}`，404 视为成功；直写库按 `uid + creator_id` 删除）
 - 增量：`state.json` 记 `last_updated_ts`（epoch 秒）；列表按 updated_at 降序，
   遇到 `ts <= 水印` 即 `break`（后续更旧）；`--full` 或首次运行（水印为 0）走全量；
-  `--dry-run` 不读/写 memos，也不保存状态
+  `--dry-run` 不读/写 memos，也不保存状态；GitHub Actions 模式的 `state.json` 走 cache 不进仓库，
+  首次可用 sync.yml 的 `watermark` 输入播种，此后每次跑完自动存回
 - API 模式幂等：`memoId` 重复时 memos 返回 `code=6`（ALREADY_EXISTS）视为跳过
 - API 模式 `tag` 以 `#tag` 拼入正文（memos 标签从正文 hashtag 提取）；直写库写 `payload.tags`
 - 直写库要求库已由 memos 初始化（有 `user` 表且存在用户），导入前 memos 必须停止

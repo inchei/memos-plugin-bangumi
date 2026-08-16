@@ -79,7 +79,11 @@ fork 本仓库，参考 [sync.yml](.github/workflows/sync.yml) 每 6 小时在 G
 | `MEMOS_USER` | memos 登录用户名（配合密码） |
 | `MEMOS_TOKEN` | 或 memos < 0.30 的 Access Token（替代密码） |
 
-增量状态（`state.json`）通过 Actions cache 在两次运行间保留；未配置 secrets 时该任务会安全跳过。
+增量水印存于 **Actions cache**，不提交仓库：首次本地全量导入后，去 Actions 页面用
+**workflow_dispatch** 手动触发一次，在 `watermark` 输入框填本地 `state.json` 的
+`last_updated_ts`（epoch 秒），该次运行把它写入 cache；之后定时任务每次恢复 cache 走增量，
+跑完自动存回最新水印。若没填 watermark，首次会自动全量扫一次（幂等安全），之后自然走增量。
+目标若是另一个空 memos，可手动触发时勾选 `full` 强制全量铺一次。未配置 secrets 时任务安全跳过。
 
 ## 卸载
 

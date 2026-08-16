@@ -4,6 +4,17 @@ on:
   schedule:
     - cron: "0 */6 * * *"
   workflow_dispatch:
+    inputs:
+      watermark:
+        description: "初始水印（epoch 秒，可选）：填本地首次同步生成的 state.json 的 last_updated_ts，让首次运行直接走增量"
+        required: false
+        type: string
+        default: ""
+      full:
+        description: "强制全量扫描本次（如刚接入一个空的 memos 实例）"
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -19,11 +30,21 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: 恢复增量状态（水印）
-        uses: actions/cache@v4
+      - name: 恢复增量状态（cache，不进仓库）
+        id: restore
+        uses: actions/cache/restore@v4
         with:
           path: state.json
-          key: memos-plugin-bangumi-state
+          key: memos-plugin-bangumi-state-${{ github.run_id }}
+          restore-keys: memos-plugin-bangumi-state-
+
+      - name: 写入初始水印（仅首次播种）
+        if: inputs.watermark != '' && steps.restore.outputs.cache-hit != 'true'
+        run: |
+          case "${{ inputs.watermark }}" in
+            *[!0-9]*) echo "watermark 需为正整数（epoch 秒）" >&2; exit 1 ;;
+          esac
+          printf '{\n  "last_updated_ts": %s\n}\n' "${{ inputs.watermark }}" > state.json
 
       - name: 同步
         env:
@@ -44,4 +65,12 @@ jobs:
           else
             args+=(--user "$MEMOS_USER" --password "$MEMOS_PASSWORD")
           fi
+          [ "${{ inputs.full }}" = "true" ] && args+=(--full)
           python3 memos-plugin-bangumi.py "${args[@]}"
+
+      - name: 保存增量状态（cache）
+        if: success()
+        uses: actions/cache/save@v4
+        with:
+          path: state.json
+          key: memos-plugin-bangumi-state-${{ github.run_id }}
