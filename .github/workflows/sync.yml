@@ -1,0 +1,47 @@
+name: sync-memos
+
+on:
+  schedule:
+    - cron: "0 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sync:
+    name: 同步 Bangumi 收藏到 Memos
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: 恢复增量状态（水印）
+        uses: actions/cache@v4
+        with:
+          path: state.json
+          key: memos-plugin-bangumi-state
+
+      - name: 同步
+        env:
+          BANGUMI_USERNAME: ${{ secrets.BANGUMI_USERNAME }}
+          MEMOS_API: ${{ secrets.MEMOS_API }}
+          MEMOS_USER: ${{ secrets.MEMOS_USER }}
+          MEMOS_PASSWORD: ${{ secrets.MEMOS_PASSWORD }}
+          MEMOS_TOKEN: ${{ secrets.MEMOS_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "$BANGUMI_USERNAME" ] || [ -z "$MEMOS_API" ]; then
+            echo "未配置 secrets（BANGUMI_USERNAME / MEMOS_API），跳过本次同步。"
+            exit 0
+          fi
+          args=(--bangumi-username "$BANGUMI_USERNAME" --api "$MEMOS_API")
+          if [ -n "$MEMOS_TOKEN" ]; then
+            args+=(--token "$MEMOS_TOKEN")
+          else
+            args+=(--user "$MEMOS_USER" --password "$MEMOS_PASSWORD")
+          fi
+          python3 memos-plugin-bangumi.py "${args[@]}"
