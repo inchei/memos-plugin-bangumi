@@ -337,7 +337,7 @@ class APIWriter:
                 query["pageToken"] = page_token
             code, body = self._request("GET", "/api/v1/memos", query)
             if code != 200:
-                raise RuntimeError("memos 列表请求失败：HTTP {}".format(code))
+                raise RuntimeError("memos 列表请求失败（HTTP {0}）：{1}".format(code, truncate(body.decode("utf-8", "replace"), 200)))
             out = json.loads(body.decode("utf-8"))
             for m in out.get("memos") or []:
                 name = m.get("name") or ""
